@@ -1,7 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import logo from "@/assets/aisec-logo.jpg";
 import { logout, currentUser } from "@/lib/auth";
-import { LayoutDashboard, Radar, LogOut } from "lucide-react";
+import { LayoutDashboard, Radar, LogOut, Bell } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
@@ -11,6 +11,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const nav = [
     { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { to: "/monitoramento", label: "Monitoramento", icon: Radar },
+    { to: "/notificacoes", label: "Notificações", icon: Bell },
   ];
 
   return (
