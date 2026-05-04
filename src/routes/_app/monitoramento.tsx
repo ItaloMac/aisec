@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSim } from "@/lib/simulation";
 import { riskColor, riskBg, ALERT_THRESHOLD } from "@/lib/risk";
+import { canAccessSector, currentRole } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -19,7 +20,8 @@ export const Route = createFileRoute("/_app/monitoramento")({
 
 function MonitoringPage() {
   const { states, triggerSector } = useSim();
-  const list = Object.values(states);
+  const role = currentRole();
+  const list = Object.values(states).filter((st) => canAccessSector(st.sector.id));
 
   return (
     <div className="p-8 space-y-6">
@@ -29,6 +31,7 @@ function MonitoringPage() {
           <h1 className="font-display text-3xl font-bold">Monitoramento de Setores</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Mapa de calor automático · alerta crítico em {ALERT_THRESHOLD}s sem EPI
+            {role === "supervisor" && " · exibindo apenas seus setores"}
           </p>
         </div>
         <div className="flex items-center gap-3 text-xs">
@@ -130,7 +133,7 @@ function PlantView() {
             </pattern>
           </defs>
           <rect width="1000" height="600" fill="url(#grid)" />
-          {Object.values(states).map((st) => {
+          {Object.values(states).filter((st) => canAccessSector(st.sector.id)).map((st) => {
             const color = st.active ? riskColor(st.seconds) : "hsl(150,40%,40%)";
             const fill = st.active ? riskBg(st.seconds, 0.45) : "hsla(150,40%,40%,0.18)";
             return (

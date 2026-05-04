@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
@@ -35,6 +35,14 @@ const defaults: NotificationSettings = {
 };
 
 export const Route = createFileRoute("/_app/notificacoes")({
+  beforeLoad: () => {
+    if (typeof window !== "undefined") {
+      const role = localStorage.getItem("aisec_role") || "global";
+      if (role !== "global") {
+        throw redirect({ to: "/dashboard" });
+      }
+    }
+  },
   component: NotificacoesPage,
 });
 
