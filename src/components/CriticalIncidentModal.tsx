@@ -1,4 +1,5 @@
 import { useSim } from "@/lib/simulation";
+import { canAccessSector } from "@/lib/auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, MapPin, User, ShieldOff, Clock } from "lucide-react";
@@ -16,7 +17,8 @@ export function CriticalIncidentModal() {
     return () => clearInterval(t);
   }, [criticalIncident]);
 
-  const open = !!criticalIncident;
+  const visible = !!criticalIncident && canAccessSector(criticalIncident.sectorId);
+  const open = visible;
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) acknowledgeCritical(); }}>
