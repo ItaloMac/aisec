@@ -1,11 +1,13 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { isAuthed, login } from "@/lib/auth";
+import { isAuthed, login, type Role } from "@/lib/auth";
+import { SECTORS } from "@/lib/sectors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import logo from "@/assets/aisec-logo.jpg";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Globe2, HardHat } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   beforeLoad: () => {
@@ -20,11 +22,17 @@ function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("operador@aisec.io");
   const [password, setPassword] = useState("");
+  const [role, setRole] = useState<Role>("global");
+  const [sectors, setSectors] = useState<string[]>([]);
+
+  const toggleSector = (id: string) =>
+    setSectors((prev) => (prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]));
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
-    login(email);
+    if (role === "supervisor" && sectors.length === 0) return;
+    login(email, role, role === "supervisor" ? sectors : []);
     navigate({ to: "/dashboard" });
   };
 
@@ -53,7 +61,7 @@ function LoginPage() {
         <div className="relative text-xs text-muted-foreground">© AISEC · Todos os direitos reservados</div>
       </div>
 
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 overflow-y-auto">
         <form onSubmit={onSubmit} className="w-full max-w-sm space-y-6">
           <div className="lg:hidden flex items-center gap-3">
             <img src={logo} alt="AISEC" className="w-10 h-10 rounded-md" />
@@ -73,10 +81,64 @@ function LoginPage() {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
             </div>
           </div>
+
+          <div className="space-y-2">
+            <Label>Nível de acesso</Label>
+            <div className="grid grid-cols-2 gap-2">
+              <RoleCard
+                active={role === "global"}
+                onClick={() => setRole("global")}
+                icon={<Globe2 className="w-4 h-4" />}
+                title="Global"
+                desc="Acesso total"
+              />
+              <RoleCard
+                active={role === "supervisor"}
+                onClick={() => setRole("supervisor")}
+                icon={<HardHat className="w-4 h-4" />}
+                title="Supervisor"
+                desc="Setores próprios"
+              />
+            </div>
+          </div>
+
+          {role === "supervisor" && (
+            <div className="space-y-2">
+              <Label>Setores sob sua responsabilidade</Label>
+              <div className="grid grid-cols-2 gap-2 max-h-44 overflow-y-auto rounded-md border border-border p-3">
+                {SECTORS.map((s) => (
+                  <label key={s.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <Checkbox
+                      checked={sectors.includes(s.id)}
+                      onCheckedChange={() => toggleSector(s.id)}
+                    />
+                    <span className="truncate">{s.name}</span>
+                  </label>
+                ))}
+              </div>
+              {sectors.length === 0 && (
+                <p className="text-xs text-destructive">Selecione ao menos um setor.</p>
+              )}
+            </div>
+          )}
+
           <Button type="submit" className="w-full">Entrar</Button>
           <p className="text-xs text-center text-muted-foreground">Demo · qualquer credencial é aceita</p>
         </form>
       </div>
     </div>
+  );
+}
+
+function RoleCard({ active, onClick, icon, title, desc }: { active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left rounded-md border p-3 transition-colors ${active ? "border-primary bg-primary/10" : "border-border hover:bg-muted"}`}
+    >
+      <div className="flex items-center gap-2 text-sm font-medium">{icon}{title}</div>
+      <div className="text-xs text-muted-foreground mt-0.5">{desc}</div>
+    </button>
   );
 }

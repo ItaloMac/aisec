@@ -1,18 +1,22 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import logo from "@/assets/aisec-logo.jpg";
-import { logout, currentUser } from "@/lib/auth";
-import { LayoutDashboard, Radar, LogOut, Bell } from "lucide-react";
+import { logout, currentUser, currentRole, currentSectors } from "@/lib/auth";
+import { SECTORS } from "@/lib/sectors";
+import { LayoutDashboard, Radar, LogOut, Bell, Globe2, HardHat } from "lucide-react";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const { location } = useRouterState();
   const user = currentUser();
+  const role = currentRole();
+  const sectorIds = currentSectors();
+  const sectorNames = SECTORS.filter((s) => sectorIds.includes(s.id)).map((s) => s.name);
 
   const nav = [
-    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/monitoramento", label: "Monitoramento", icon: Radar },
-    { to: "/notificacoes", label: "Notificações", icon: Bell },
-  ];
+    { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["global", "supervisor"] },
+    { to: "/monitoramento", label: "Monitoramento", icon: Radar, roles: ["global", "supervisor"] },
+    { to: "/notificacoes", label: "Notificações", icon: Bell, roles: ["global"] },
+  ].filter((n) => n.roles.includes(role));
 
   return (
     <div className="min-h-screen flex">
@@ -42,8 +46,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border">
-          <div className="px-3 py-2 text-xs text-muted-foreground truncate">{user}</div>
+        <div className="p-3 border-t border-border space-y-2">
+          <div className="px-3 py-2 space-y-1.5">
+            <div className="text-xs text-muted-foreground truncate">{user}</div>
+            <div className={`inline-flex items-center gap-1.5 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-sm ${role === "global" ? "bg-primary/15 text-primary" : "bg-accent/20 text-accent-foreground"}`}>
+              {role === "global" ? <Globe2 className="w-3 h-3" /> : <HardHat className="w-3 h-3" />}
+              {role === "global" ? "Acesso Global" : "Supervisor"}
+            </div>
+            {role === "supervisor" && sectorNames.length > 0 && (
+              <div className="text-[10px] text-muted-foreground leading-tight">
+                {sectorNames.join(" · ")}
+              </div>
+            )}
+          </div>
           <button
             onClick={() => { logout(); navigate({ to: "/login" }); }}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
