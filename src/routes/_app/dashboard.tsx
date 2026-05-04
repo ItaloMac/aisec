@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { ShieldCheck, TrendingUp, AlertOctagon, Activity } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, CartesianGrid } from "recharts";
 import { SECTORS } from "@/lib/sectors";
+import { canAccessSector, currentRole } from "@/lib/auth";
 
 export const Route = createFileRoute("/_app/dashboard")({
   head: () => ({
@@ -22,16 +23,21 @@ const weekly = [
 
 function DashboardPage() {
   const { metrics, history } = useSim();
+  const role = currentRole();
+  const visibleSectors = SECTORS.filter((s) => canAccessSector(s.id));
+  const visibleHistory = history.filter((h) => canAccessSector(h.sectorId));
 
-  const bySector = SECTORS.map((s) => ({
+  const bySector = visibleSectors.map((s) => ({
     name: s.name,
-    infrações: history.filter((h) => h.sectorId === s.id).length + Math.floor(Math.random() * 3) + 1,
+    infrações: visibleHistory.filter((h) => h.sectorId === s.id).length + Math.floor(Math.random() * 3) + 1,
   }));
 
   return (
     <div className="p-8 space-y-6">
       <header>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground">Visão geral</div>
+        <div className="text-xs uppercase tracking-widest text-muted-foreground">
+          {role === "global" ? "Visão geral" : "Visão do supervisor"}
+        </div>
         <h1 className="font-display text-3xl font-bold">Dashboard de Segurança</h1>
       </header>
 
@@ -67,7 +73,7 @@ function DashboardPage() {
           <h3 className="font-display font-semibold mb-1">Últimas ocorrências</h3>
           <p className="text-xs text-muted-foreground mb-4">Eventos resolvidos recentemente</p>
           <ul className="space-y-3 max-h-64 overflow-y-auto">
-            {history.slice(0, 8).map((h) => (
+            {visibleHistory.slice(0, 8).map((h) => (
               <li key={h.id} className="flex items-start gap-3 text-sm">
                 <div className={`mt-1 w-2 h-2 rounded-full ${h.escalated ? "bg-destructive" : "bg-primary"}`} />
                 <div className="flex-1 min-w-0">
@@ -76,7 +82,7 @@ function DashboardPage() {
                 </div>
               </li>
             ))}
-            {history.length === 0 && <li className="text-sm text-muted-foreground">Sem ocorrências.</li>}
+            {visibleHistory.length === 0 && <li className="text-sm text-muted-foreground">Sem ocorrências.</li>}
           </ul>
         </Card>
       </div>
